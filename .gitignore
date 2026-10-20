@@ -1,0 +1,17 @@
+# 비밀 정보 (Supabase 주소·키 등)
+.env
+
+# 파이썬이 자동으로 만드는 임시 파일
+__pycache__/
+*.pyc
+
+# 앱이 실행되며 쌓이는 AI 대화 기록
+ai_logs.jsonl
+
+# 윈도우·편집기가 만드는 잡파일
+Thumbs.db
+desktop.ini
+.vscode/
+
+# 내 컴퓨터에만 쓰는 Claude 개인 설정
+.claude/settings.local.json
