@@ -91,12 +91,16 @@ def screen2():
 
     for i in range(1, st.session_state.count + 1):
         name = f"실습 {i}"
-        uploaded = (uploads["practice_no"] == i).sum()
+        board_rows = uploads[uploads["practice_no"] == i]
+        # 가장 최근에 올라온 사진 하나 (uploads 는 최근 것이 위, 사진이 없는 예전 글은 건너뜀)
+        latest = next((p for p in map(photo_of, board_rows["id"]) if p), None)
         with st.container(border=True):
             if st.button(name, width="stretch"):
                 st.session_state.board = i
                 go(3)
-            st.caption(f"올라온 개수 {uploaded}개")
+            if latest:
+                st.image(str(latest), width=160)
+            st.caption(f"올라온 개수 {len(board_rows)}개")
 
     if st.button("처음으로", width="stretch"):
         go(1)
