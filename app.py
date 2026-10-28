@@ -255,6 +255,25 @@ def log_sidebar():
         st.dataframe(table, hide_index=True)
 
 
+# AI 답 점검 (정확히 세 줄이고 300자 이하면 통과, "확실하지 않은 내용이에요"로 시작하면 그대로 통과)
+RETRY_TEXT = "다시 시도해 주세요"
+
+
+def answer_ok(text):
+    text = text.strip()
+    if text.lstrip("[").startswith("확실하지 않은 내용이에요"):
+        return True
+    return len(text.splitlines()) == 3 and len(text) <= 300
+
+
+# 점검을 못 넘으면 한 번 더 묻는다 (ask 는 AI를 한 번 부르는 함수, 두 번 다 못 넘으면 ok 가 False)
+def ask_checked(ask):
+    interaction = ask()
+    if not answer_ok(interaction.output_text):
+        interaction = ask()
+    return interaction, answer_ok(interaction.output_text)
+
+
 # 사이드바 · 답변 초안 (문의 글을 넣으면 AI가 답변 초안을 만든다, 어느 화면에서나 보임)
 def draft_sidebar():
     with st.sidebar:
@@ -270,15 +289,15 @@ def draft_sidebar():
                     # genai.Client()는 GEMINI_API_KEY 환경 변수에서 키를 읽는다
                     # 서버가 붐빌 때 화면이 멈춰 있지 않도록 60초(60000ms) 뒤에는 포기한다
                     client = genai.Client(http_options={"timeout": 60000})
-                    interaction = client.interactions.create(
+                    interaction, ok = ask_checked(lambda: client.interactions.create(
                         model="gemini-3.5-flash-lite",
                         system_instruction="고객 문의 글에 대한 답변 초안을 한국어로, 정중하고 간결하게 작성한다."
                         + instruction("answer_format.txt")
                         + tone_instruction(tone),
                         input=question,
-                    )
-                    # 화면을 옮겨도 남아 있도록 session_state 에 둔다
-                    st.session_state.draft = interaction.output_text
+                    ))
+                    # 화면을 옮겨도 남아 있도록 session_state 에 둔다 (점검을 못 넘으면 답 대신 다시 시도 안내)
+                    st.session_state.draft = interaction.output_text if ok else RETRY_TEXT
                     save_log("답변 초안", tone, question, interaction.output_text)
                 except Exception as e:
                     st.error(f"답을 받지 못했습니다: {e}")
@@ -371,7 +390,8 @@ def chatbot():
                 # 서버가 붐빌 때 화면이 멈춰 있지 않도록 60초(60000ms) 뒤에는 포기한다
                 client = genai.Client(http_options={"timeout": 60000})
                 # 앞 대화는 previous_interaction_id 로 이어지지만, system_instruction 은 매번 다시 보내야 한다
-                interaction = client.interactions.create(
+                # 다시 물을 때도 같은 앞 대화에 이어서 묻는다 (못 넘은 답은 앞 대화에 넣지 않음)
+                interaction, ok = ask_checked(lambda: client.interactions.create(
                     model="gemini-3.5-flash-lite",
                     system_instruction=(
                         "너는 이 서비스의 상담 챗봇이다. 아래 PRD.md 내용만 근거로, 서비스에 대해 묻는 말에 "
@@ -382,9 +402,12 @@ def chatbot():
                     ),
                     input=question,
                     previous_interaction_id=st.session_state.chat_last_id,
-                )
-                st.session_state.chat_last_id = interaction.id
-                reply = {"role": "assistant", "content": interaction.output_text, "ai": True}
+                ))
+                if ok:
+                    st.session_state.chat_last_id = interaction.id
+                    reply = {"role": "assistant", "content": interaction.output_text, "ai": True}
+                else:
+                    reply = {"role": "assistant", "content": RETRY_TEXT}
                 save_log("대화창", tone, question, interaction.output_text)
             except Exception as e:
                 reply = {"role": "assistant", "content": f"답을 받지 못했습니다: {e}"}
