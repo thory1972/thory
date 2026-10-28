@@ -13,9 +13,29 @@ supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
 
 st.title("내 메모")
 
+# 초안 고르는 자리 (목록의 메모를 하나 고르면 아래 넣는 칸에 그 글이 뜬다, 시간은 아래 목록과 같은 모양)
+drafts = supabase.table("drafts").select("id, comment, created_at").order("created_at", desc=True).execute().data
+comments = {row["id"]: row["comment"] for row in drafts}
+labels = {row["id"]: f"{row['created_at'][5:16].replace('T', ' ')} · {row['comment']}" for row in drafts}
+
+
+def fill_content():
+    st.session_state.content = comments.get(st.session_state.picked_draft, "")
+
+
+st.selectbox(
+    "초안 고르기",
+    list(comments),
+    index=None,
+    format_func=labels.get,
+    placeholder="목록에서 하나 고르세요",
+    key="picked_draft",
+    on_change=fill_content,
+)
+
 # 적는 자리 (저장하면 칸이 비워짐)
 with st.form("write", clear_on_submit=True):
-    content = st.text_input("한 줄 메모")
+    content = st.text_input("한 줄 메모", key="content")
     submitted = st.form_submit_button("저장", type="primary", width="stretch")
 
 if submitted:
