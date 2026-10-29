@@ -66,35 +66,59 @@ def go(page):
     st.rerun()
 
 
+# 첫 화면 히어로 배경 영상 (이 파일 옆 hero.mp4, 없으면 같은 파란 그러데이션만 보임)
+HERO_VIDEO = Path(__file__).parent / "hero.mp4"
+
+
+# 영상을 페이지 안에 바로 넣는다 (고친 시각이 바뀌면 다시 읽음)
+@st.cache_data
+def hero_video_src(mtime):
+    return "data:video/mp4;base64," + base64.b64encode(HERO_VIDEO.read_bytes()).decode()
+
+
 # 첫 화면 · 서비스 소개 (배경 #9ac1f0 · 글자 #a0e548 · 강조 #e45f2b, 글자는 배경과 대비가 낮아 진한 그림자를 둠)
+# 히어로 칸: 영상을 칸 전체에 깔고 그 위에 제목 · 한 줄 소개 · 시작하기 버튼을 올린다
 def landing():
     st.html("""<style>
     .stApp { background: #9ac1f0; }
-    .landing { padding: 48px 0 24px; text-align: center; color: #a0e548;
+    .st-key-hero { position: relative; overflow: hidden; border-radius: 16px; padding: 56px 24px 48px;
+        margin-top: 24px; background: linear-gradient(135deg, #075985, #0EA5E9); }
+    .st-key-hero > * { position: relative; z-index: 1; }
+    .st-key-hero > [data-testid="stElementContainer"]:has(.hero-video) { position: absolute; inset: 0;
+        z-index: 0; margin: 0; }
+    .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+        pointer-events: none; }
+    .landing { text-align: center; color: #a0e548;
         text-shadow: 0 1px 2px #1d3557, 0 0 6px rgba(29, 53, 87, 0.6); }
     .landing h1 { font-size: 3rem; font-weight: 800; color: #a0e548; margin-bottom: 12px; }
-    .landing .intro { font-size: 1.25rem; margin-bottom: 40px; }
-    .landing ol { list-style: none; padding: 0; display: grid; gap: 16px;
+    .landing .intro { font-size: 1.25rem; margin-bottom: 16px; }
+    .landing ol { list-style: none; padding: 0; margin-top: 24px; display: grid; gap: 16px;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); text-align: left; }
     .landing li { padding: 20px; border-radius: 12px; border-top: 4px solid #e45f2b;
         background: rgba(29, 53, 87, 0.12); font-size: 1.05rem; }
     .landing li b { display: block; color: #e45f2b; text-shadow: none; font-size: 1.5rem; margin-bottom: 4px; }
+    .st-key-landing_start { align-self: center; width: min(320px, 100%); }
     .st-key-landing_start button { background: #e45f2b; border-color: #e45f2b; color: #ffffff;
-        font-size: 1.15rem; padding: 12px 0; }
+        font-size: 1.15rem; padding: 12px 0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); }
     .st-key-landing_start button:hover { background: #c94d1d; border-color: #c94d1d; color: #ffffff; }
-    </style>
-    <div class="landing">
-      <h1>실습 게시판 만들기</h1>
-      <p class="intro">실습 개수만 넣으면 번호가 매겨진 실습 게시판이 만들어집니다</p>
-      <ol>
+    </style>""")
+
+    with st.container(key="hero"):
+        if HERO_VIDEO.exists():
+            src = hero_video_src(HERO_VIDEO.stat().st_mtime)
+            st.html(f'<video class="hero-video" src="{src}" autoplay muted loop playsinline></video>')
+        st.html("""<div class="landing">
+          <h1>실습 게시판 만들기</h1>
+          <p class="intro">실습 개수만 넣으면 번호가 매겨진 실습 게시판이 만들어집니다</p>
+        </div>""")
+        if st.button("시작하기", key="landing_start", width="stretch"):
+            go(1)
+
+    st.html("""<div class="landing"><ol>
         <li><b>1</b>실습 개수를 넣고 만들기를 누르는 화면</li>
         <li><b>2</b>만들어진 게시판들을 목록으로 보여주는 화면</li>
         <li><b>3</b>결과물을 올리고, 올라온 결과물을 보는 화면</li>
-      </ol>
-    </div>""")
-
-    if st.button("시작하기", key="landing_start", width="stretch"):
-        go(1)
+    </ol></div>""")
 
 
 # 화면1 · 만들기
