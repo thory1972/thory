@@ -56,14 +56,45 @@ def make_feedback(draft_id, practice_no, comment):
     save_log("AI 피드백", None, text, interaction.output_text.strip())
 
 
-# 지금 보여줄 화면 (1, 2, 3, 4=안내)
+# 지금 보여줄 화면 (0=첫 화면, 1, 2, 3, 4=안내)
 if "page" not in st.session_state:
-    st.session_state.page = 1
+    st.session_state.page = 0
 
 
 def go(page):
     st.session_state.page = page
     st.rerun()
+
+
+# 첫 화면 · 서비스 소개 (배경 #9ac1f0 · 글자 #a0e548 · 강조 #e45f2b, 글자는 배경과 대비가 낮아 진한 그림자를 둠)
+def landing():
+    st.html("""<style>
+    .stApp { background: #9ac1f0; }
+    .landing { padding: 48px 0 24px; text-align: center; color: #a0e548;
+        text-shadow: 0 1px 2px #1d3557, 0 0 6px rgba(29, 53, 87, 0.6); }
+    .landing h1 { font-size: 3rem; font-weight: 800; color: #a0e548; margin-bottom: 12px; }
+    .landing .intro { font-size: 1.25rem; margin-bottom: 40px; }
+    .landing ol { list-style: none; padding: 0; display: grid; gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); text-align: left; }
+    .landing li { padding: 20px; border-radius: 12px; border-top: 4px solid #e45f2b;
+        background: rgba(29, 53, 87, 0.12); font-size: 1.05rem; }
+    .landing li b { display: block; color: #e45f2b; text-shadow: none; font-size: 1.5rem; margin-bottom: 4px; }
+    .st-key-landing_start button { background: #e45f2b; border-color: #e45f2b; color: #ffffff;
+        font-size: 1.15rem; padding: 12px 0; }
+    .st-key-landing_start button:hover { background: #c94d1d; border-color: #c94d1d; color: #ffffff; }
+    </style>
+    <div class="landing">
+      <h1>실습 게시판 만들기</h1>
+      <p class="intro">실습 개수만 넣으면 번호가 매겨진 실습 게시판이 만들어집니다</p>
+      <ol>
+        <li><b>1</b>실습 개수를 넣고 만들기를 누르는 화면</li>
+        <li><b>2</b>만들어진 게시판들을 목록으로 보여주는 화면</li>
+        <li><b>3</b>결과물을 올리고, 올라온 결과물을 보는 화면</li>
+      </ol>
+    </div>""")
+
+    if st.button("시작하기", key="landing_start", width="stretch"):
+        go(1)
 
 
 # 화면1 · 만들기
@@ -415,6 +446,13 @@ def chatbot():
             show_message(messages, reply)
 
 
+# 첫 화면은 소개만 보여주고, 사이드바와 챗봇은 기능 화면에서만 그린다
+if st.session_state.page == 0:
+    landing()
+    st.stop()
+
+if st.sidebar.button("첫 화면으로", width="stretch"):
+    go(0)
 draft_sidebar()
 chatbot()
 log_sidebar()  # 대화창 다음에 그려야 방금 대화창에서 받은 답도 목록에 바로 보인다
