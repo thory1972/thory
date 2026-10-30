@@ -1,8 +1,16 @@
+# 모든 화면 파일의 화면 (제목 · 버튼 · 입력 칸 · 사이드바 · 챗봇 대화창)
 streamlit==1.65.0
+# 표 다루기 (올라온 결과물 · 구독 목록 · 맛집 목록을 표로 만들고, CSV 를 읽고 내려받기 파일을 만듦)
 pandas==3.0.6
+# 화면 파일 옆 .env 의 값(Supabase 주소 · 키 등)을 읽어 옴
 python-dotenv==1.2.4
+# Supabase 저장 (drafts · ai_logs · guestbook · subscriptions 표, docs · photos 파일 보관함)
 supabase==2.32.0
+# Gemini AI 부르기 (AI 한 줄 피드백 · 답변 초안 · 챗봇 답)
 google-genai==2.31.0
+# 챗봇 아이콘 그림을 로봇 얼굴만 잘라 작게 줄임 (app.py)
 pillow==12.3.0
+# 카카오 장소 검색에 묻기 (lunch.py 근처 맛집)
 requests==2.34.2
+# 근처 맛집 지도 그리기 (lunch.py)
 pydeck==0.9.3

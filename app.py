@@ -14,9 +14,13 @@ from supabase import create_client
 
 st.set_page_config(page_title="실습 게시판 만들기")
 
-# Supabase 연결 (이 파일 옆 .env 의 주소와 키)
+# Supabase 연결 (이 파일 옆 .env 의 주소와 키, Streamlit Cloud 에서는 Secrets 칸의 값)
 load_dotenv(Path(__file__).parent / ".env")
-supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
+# 값이 없으면 알아보기 어려운 오류 대신 안내만 보여 주고 멈춘다
+if not os.environ.get("SUPABASE_URL") or not os.environ.get("SUPABASE_KEY"):
+    st.error("설정 값(SUPABASE_URL, SUPABASE_KEY)이 없습니다. Secrets 칸을 확인해 주세요.")
+    st.stop()
+supabase =create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
 
 # 올라온 결과물 (drafts 표, 최근 것이 위)
 rows = supabase.table("drafts").select("*").order("created_at", desc=True).execute().data
